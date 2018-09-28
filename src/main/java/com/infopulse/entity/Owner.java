@@ -11,18 +11,18 @@ import javax.persistence.*;
 @Getter
 @NoArgsConstructor
 @Entity
-@Table(name = "phones")
-public class Phone {
+@Table(name="owners")
+public class Owner {
 
     @Id
     @GeneratedValue(generator = "increment")
     @GenericGenerator(name="increment", strategy = "increment")
     private Long id;
 
-
-    @Column(name = "phone_number", unique = true, nullable = false, length = 10)
-    private String phoneNumber;
+    @Column(name = "owner_name", unique = true, nullable = false, length = 100)
+    private String owner_name;
 
     @OneToOne
-    Customer customer;
+    Pet pet;
+
 }

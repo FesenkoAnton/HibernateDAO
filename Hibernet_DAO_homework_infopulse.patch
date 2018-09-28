@@ -1,0 +1,768 @@
+Index: src/main/java/com/infopulse/dao/CustomerDAO.java
+===================================================================
+--- src/main/java/com/infopulse/dao/CustomerDAO.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
++++ src/main/java/com/infopulse/dao/CustomerDAO.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
+@@ -1,14 +0,0 @@
+-package com.infopulse.dao;
+-
+-import com.infopulse.entity.Customer;
+-
+-import java.util.List;
+-
+-public interface CustomerDAO {
+-
+-    void insertCustomer(Customer customer);
+-
+-    List<Customer> getAllCustomers();
+-
+-    void deleteAll();
+-}
+Index: src/main/java/com/infopulse/dao/HibernateCustomerDAO.java
+===================================================================
+--- src/main/java/com/infopulse/dao/HibernateCustomerDAO.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
++++ src/main/java/com/infopulse/dao/HibernateCustomerDAO.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
+@@ -1,44 +0,0 @@
+-package com.infopulse.dao;
+-
+-import com.infopulse.entity.Customer;
+-import org.hibernate.SessionFactory;
+-
+-import javax.persistence.EntityManager;
+-import java.util.List;
+-
+-public class HibernateCustomerDAO implements CustomerDAO{
+-    private final SessionFactory sessionFactory;
+-
+-    public HibernateCustomerDAO(SessionFactory sessionFactory) {
+-        this.sessionFactory = sessionFactory;
+-
+-    }
+-
+-    @Override
+-    public void insertCustomer(Customer customer) {
+-        EntityManager entityManager = sessionFactory.createEntityManager();
+-        entityManager.getTransaction().begin();
+-        entityManager.persist(customer);
+-        entityManager.getTransaction().commit();
+-        entityManager.close();
+-    }
+-
+-    @Override
+-    public List<Customer> getAllCustomers() {
+-        EntityManager entityManager = sessionFactory.createEntityManager();
+-        entityManager.getTransaction().begin();
+-        List<Customer> result = entityManager.createQuery( "from Customer", Customer.class).getResultList();
+-        entityManager.getTransaction().commit();
+-        entityManager.close();
+-        return result;
+-    }
+-
+-    @Override
+-    public void deleteAll(){
+-        EntityManager entityManager = sessionFactory.createEntityManager();
+-        entityManager.getTransaction().begin();
+-        entityManager.createNativeQuery("DELETE FROM customers");
+-        entityManager.getTransaction().commit();
+-        entityManager.close();
+-    }
+-}
+Index: src/main/java/com/infopulse/entity/type/AddressType.java
+===================================================================
+--- src/main/java/com/infopulse/entity/type/AddressType.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
++++ src/main/java/com/infopulse/entity/type/AddressType.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
+@@ -1,32 +0,0 @@
+-package com.infopulse.entity.type;
+-
+-import com.infopulse.entity.Address;
+-import org.hibernate.dialect.Dialect;
+-import org.hibernate.type.AbstractSingleColumnStandardBasicType;
+-import org.hibernate.type.DiscriminatorType;
+-import org.hibernate.type.descriptor.sql.VarcharTypeDescriptor;
+-
+-public class AddressType extends AbstractSingleColumnStandardBasicType<Address>
+-        implements DiscriminatorType<Address> {
+-
+-    public static final AddressType INSTANCE = new AddressType();
+-
+-    public AddressType() {
+-        super(VarcharTypeDescriptor.INSTANCE, AddressTypeDescriptor.INSTANCE);
+-    }
+-
+-    @Override
+-    public String getName() {
+-        return "address";
+-    }
+-
+-    @Override
+-    public Address stringToObject(String string) throws Exception {
+-        return fromString(string);
+-    }
+-
+-    @Override
+-    public String objectToSQLString(Address t, Dialect dlct) throws Exception {
+-        return toString(t);
+-    }
+-}
+\ No newline at end of file
+Index: src/main/java/com/infopulse/entity/type/AddressTypeDescriptor.java
+===================================================================
+--- src/main/java/com/infopulse/entity/type/AddressTypeDescriptor.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
++++ src/main/java/com/infopulse/entity/type/AddressTypeDescriptor.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
+@@ -1,57 +0,0 @@
+-package com.infopulse.entity.type;
+-
+-import com.infopulse.entity.Address;
+-import org.hibernate.type.descriptor.WrapperOptions;
+-import org.hibernate.type.descriptor.java.AbstractTypeDescriptor;
+-
+-public class AddressTypeDescriptor extends AbstractTypeDescriptor<Address> {
+-    public static final AddressTypeDescriptor INSTANCE = new AddressTypeDescriptor();
+-
+-    public AddressTypeDescriptor() {
+-        super( Address.class );
+-    }
+-
+-    @Override
+-    public String toString(Address t) {
+-        String s=t.getCity()+";"+t.getStreet();
+-        return s;
+-    }
+-
+-    @Override
+-    public Address fromString(String string) {
+-        String[] arr=string.split(";");
+-        Address t=new Address();
+-        t.setCity(arr[0]);
+-        t.setStreet(arr[1]);
+-        return t;
+-    }
+-
+-    @Override
+-    public <X> X unwrap(Address t, Class<X> type, WrapperOptions wo) {
+-        if ( t == null ) {
+-            return null;
+-        }
+-        if ( Address.class.isAssignableFrom( type ) ) {
+-            return (X) t;
+-        }
+-        if ( String.class.isAssignableFrom( type ) ) {
+-            return (X) toString(t);
+-        }
+-        throw unknownUnwrap( type );
+-    }
+-
+-    @Override
+-    public <X> Address wrap(X x, WrapperOptions wo) {
+-        if ( x == null ) {
+-            return null;
+-        }
+-        if ( String.class.isInstance(x) ) {
+-            return fromString( (String)x );
+-        }
+-        if ( Address.class.isInstance(x ) ) {
+-            return (Address)x;
+-        }
+-        throw unknownWrap(x.getClass() );
+-    }
+-
+-}
+Index: src/main/java/com/infopulse/entity/Address.java
+===================================================================
+--- src/main/java/com/infopulse/entity/Address.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
++++ src/main/java/com/infopulse/entity/Address.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
+@@ -1,15 +0,0 @@
+-package com.infopulse.entity;
+-
+-import lombok.Getter;
+-import lombok.NoArgsConstructor;
+-import lombok.Setter;
+-
+-@Setter
+-@Getter
+-@NoArgsConstructor
+-public class Address {
+-
+-    private String city;
+-
+-    private String street;
+-}
+Index: src/main/java/com/infopulse/entity/BadBank.java
+===================================================================
+--- src/main/java/com/infopulse/entity/BadBank.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
++++ src/main/java/com/infopulse/entity/BadBank.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
+@@ -1,22 +0,0 @@
+-package com.infopulse.entity;
+-
+-import lombok.Getter;
+-import lombok.NoArgsConstructor;
+-import lombok.Setter;
+-
+-import javax.persistence.Column;
+-import javax.persistence.Entity;
+-import javax.persistence.PrimaryKeyJoinColumn;
+-import javax.persistence.Table;
+-
+-@Setter
+-@Getter
+-@NoArgsConstructor
+-@Entity
+-@Table(name = "bad_bank")
+-@PrimaryKeyJoinColumn(name="BANK_ID")
+-public class BadBank extends Bank{
+-
+-    @Column(name="black_list")
+-    private String blackList;
+-}
+Index: src/main/java/com/infopulse/entity/Bank.java
+===================================================================
+--- src/main/java/com/infopulse/entity/Bank.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
++++ src/main/java/com/infopulse/entity/Bank.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
+@@ -1,33 +0,0 @@
+-package com.infopulse.entity;
+-
+-import lombok.Getter;
+-import lombok.NoArgsConstructor;
+-import lombok.Setter;
+-import org.hibernate.annotations.GenericGenerator;
+-
+-import javax.persistence.*;
+-import java.util.ArrayList;
+-import java.util.List;
+-
+-import static javax.persistence.InheritanceType.JOINED;
+-
+-@Setter
+-@Getter
+-@NoArgsConstructor
+-@Entity
+-@Table(name = "banks")
+-@Inheritance(strategy=JOINED)
+-public class Bank {
+-
+-    @Id
+-    @GeneratedValue(generator = "increment")
+-    @GenericGenerator(name="increment", strategy = "increment")
+-    private Long id;
+-
+-
+-    @Column(name = "name", unique = false, nullable = false, length = 100)
+-    private String name;
+-
+-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+-    private List<Customer> customers = new ArrayList<>();
+-}
+Index: src/main/java/com/infopulse/entity/Customer.java
+===================================================================
+--- src/main/java/com/infopulse/entity/Customer.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
++++ src/main/java/com/infopulse/entity/Customer.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
+@@ -1,54 +0,0 @@
+-package com.infopulse.entity;
+-
+-import lombok.Getter;
+-import lombok.NoArgsConstructor;
+-import lombok.Setter;
+-import org.hibernate.annotations.GenericGenerator;
+-import org.hibernate.annotations.Type;
+-
+-import javax.persistence.*;
+-import java.util.ArrayList;
+-import java.util.List;
+-
+-import static javax.persistence.DiscriminatorType.STRING;
+-import static javax.persistence.InheritanceType.SINGLE_TABLE;
+-
+-@Setter
+-@Getter
+-@NoArgsConstructor
+-@Entity
+-@Table(name="customers")
+-@Inheritance(strategy=SINGLE_TABLE)
+-@DiscriminatorColumn(name="Typecli", discriminatorType=STRING, length=20)
+-@DiscriminatorValue("CUSTOMER")
+-public class Customer {
+-
+-    @Id
+-    @GeneratedValue(generator = "increment")
+-    @GenericGenerator(name="increment", strategy = "increment")
+-    private Long id;
+-
+-    @Column(name="name", unique = false, nullable = false, length = 100)
+-    @Basic
+-    private String name;
+-
+-    @Column(name="surename", unique = false, nullable = false, length = 120)
+-    @Basic
+-    private String surename;
+-
+-    @Type(type = "com.infopulse.entity.type.AddressType")
+-    private Address address;
+-
+-    @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+-    List<Order> orders = new ArrayList<>();
+-
+-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+-    Phone phone;
+-
+-    @ManyToMany(mappedBy = "customers", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+-    List<Bank> banks = new ArrayList<>();
+-
+-    public void addOrder(Order order){
+-        orders.add(order);
+-    }
+-}
+Index: src/main/java/com/infopulse/entity/GoodCustomer.java
+===================================================================
+--- src/main/java/com/infopulse/entity/GoodCustomer.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
++++ src/main/java/com/infopulse/entity/GoodCustomer.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
+@@ -1,20 +0,0 @@
+-package com.infopulse.entity;
+-
+-import lombok.Getter;
+-import lombok.NoArgsConstructor;
+-import lombok.Setter;
+-
+-import javax.persistence.Column;
+-import javax.persistence.DiscriminatorValue;
+-import javax.persistence.Entity;
+-
+-@Setter
+-@Getter
+-@NoArgsConstructor
+-@Entity
+-@DiscriminatorValue("GOOD_CUSTOMER")
+-public class GoodCustomer extends Customer{
+-
+-    @Column(name = "discount")
+-    private Integer discount;
+-}
+Index: src/main/java/com/infopulse/entity/Phone.java
+===================================================================
+--- src/main/java/com/infopulse/entity/Phone.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
++++ src/main/java/com/infopulse/entity/Phone.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
+@@ -1,28 +0,0 @@
+-package com.infopulse.entity;
+-
+-import lombok.Getter;
+-import lombok.NoArgsConstructor;
+-import lombok.Setter;
+-import org.hibernate.annotations.GenericGenerator;
+-
+-import javax.persistence.*;
+-
+-@Setter
+-@Getter
+-@NoArgsConstructor
+-@Entity
+-@Table(name = "phones")
+-public class Phone {
+-
+-    @Id
+-    @GeneratedValue(generator = "increment")
+-    @GenericGenerator(name="increment", strategy = "increment")
+-    private Long id;
+-
+-
+-    @Column(name = "phone_number", unique = true, nullable = false, length = 10)
+-    private String phoneNumber;
+-
+-    @OneToOne
+-    Customer customer;
+-}
+Index: src/main/java/com/infopulse/factory/Factory.java
+===================================================================
+--- src/main/java/com/infopulse/factory/Factory.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
++++ src/main/java/com/infopulse/factory/Factory.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
+@@ -1,26 +0,0 @@
+-package com.infopulse.factory;
+-
+-import com.infopulse.dao.CustomerDAO;
+-import com.infopulse.dao.HibernateCustomerDAO;
+-import org.hibernate.SessionFactory;
+-
+-import javax.persistence.Persistence;
+-
+-public class Factory {
+-    public final static Factory INSTANCE = new Factory();
+-
+-    private final SessionFactory sessionFactory;
+-
+-    private Factory(){
+-        sessionFactory = (SessionFactory) Persistence
+-                .createEntityManagerFactory( "org.hibernate.tutorial.jpa" );
+-    }
+-
+-    public static Factory getInstance(){
+-        return INSTANCE;
+-    }
+-
+-    public CustomerDAO getCustomerDAO(){
+-         return new HibernateCustomerDAO(sessionFactory);
+-    }
+-}
+Index: src/test/java/com/infopulse/dao/HibernateCustomerDAOTest.java
+===================================================================
+--- src/test/java/com/infopulse/dao/HibernateCustomerDAOTest.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
++++ src/test/java/com/infopulse/dao/HibernateCustomerDAOTest.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
+@@ -1,105 +0,0 @@
+-package com.infopulse.dao;
+-
+-import com.infopulse.entity.*;
+-import com.infopulse.factory.Factory;
+-import org.junit.Test;
+-
+-import java.util.ArrayList;
+-import java.util.List;
+-
+-import static junit.framework.TestCase.assertEquals;
+-
+-public class HibernateCustomerDAOTest {
+-
+-    private Factory instance = Factory.getInstance();
+-
+-
+-    @Test
+-    public void  insertAndSelectEntityTest(){
+-        CustomerDAO customerDAO = instance.getCustomerDAO();
+-        customerDAO.deleteAll();
+-
+-        Customer customer = new Customer();
+-        customer.setName("Vasya");
+-        customer.setSurename("Pupkin");
+-        Address address =new Address();
+-        address.setStreet("aaaaaaa");
+-        address.setCity("Kiev");
+-        customer.setAddress(address);
+-
+-        Order order1 =new Order();
+-        order1.setName("ffff");
+-        order1.setCustomer(customer);
+-
+-        Order order2 =new Order();
+-        order2.setName("jjjj");
+-        order2.setCustomer(customer);
+-
+-        customer.addOrder(order1);
+-        customer.addOrder(order2);
+-
+-        Phone phone = new Phone();
+-        phone.setPhoneNumber("555666777");
+-        phone.setCustomer(customer);
+-
+-        customer.setPhone(phone);
+-
+-        Bank bank = new Bank();
+-        bank.setName("Private");
+-        List<Customer> customerList = new ArrayList<>();
+-        customerList.add(customer);
+-        bank.setCustomers(customerList);
+-
+-        customer.setBanks(new ArrayList<Bank>(){{add(bank);}});
+-
+-        customerDAO.insertCustomer(customer);
+-
+-        //new customer
+-        GoodCustomer goodCustomer = new GoodCustomer();
+-        goodCustomer.setDiscount(20);
+-        goodCustomer.setName("Petya");
+-        goodCustomer.setSurename("Pupkin");
+-        goodCustomer.setAddress(address);
+-
+-        Bank newBank = new Bank();
+-        newBank.setName("Private");
+-        List<Customer> newCustomerList = new ArrayList<>();
+-        customerList.add(goodCustomer);
+-        newBank.setCustomers(newCustomerList);
+-
+-        goodCustomer.setBanks(new ArrayList<Bank>(){{add(newBank);}});
+-
+-        customerDAO.insertCustomer(goodCustomer);
+-
+-
+-        //new customer
+-        GoodCustomer customer2 = new GoodCustomer();
+-        customer2.setDiscount(20);
+-        customer2.setName("Petya");
+-        customer2.setSurename("Pupkin");
+-        customer2.setAddress(address);
+-
+-        BadBank newBank2 = new BadBank();
+-        newBank2.setBlackList("jjjjjjjjjj");
+-        newBank2.setName("Private");
+-        List<Customer> newCustomerList2 = new ArrayList<>();
+-        customerList.add(customer2);
+-        newBank2.setCustomers(newCustomerList2);
+-
+-        customer2.setBanks(new ArrayList<Bank>(){{add(newBank2);}});
+-
+-        customerDAO.insertCustomer(customer2);
+-
+-        List<Customer> customers = customerDAO.getAllCustomers();
+-//        customers.get(0).getOrders().get(0).getName(); //error in the case of LAZY.
+-
+-        Customer customerResult = customers.stream()
+-                                           .filter(c -> c.getName().equals("Vasya"))
+-                                           .findFirst()
+-                                           .get();
+-
+-        assertEquals("Vasya", customerResult.getName());
+-        assertEquals("Pupkin", customerResult.getSurename());
+-
+-    }
+-}
+Index: src/main/resources/META-INF/persistence.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/resources/META-INF/persistence.xml	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
++++ src/main/resources/META-INF/persistence.xml	(date 1538150056466)
+@@ -4,21 +4,22 @@
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
+     <persistence-unit name="org.hibernate.tutorial.jpa">
+-        <class>com.infopulse.entity.Customer</class>
+-        <class>com.infopulse.entity.Order</class>
+-        <class>com.infopulse.entity.Phone</class>
+-        <class>com.infopulse.entity.Bank</class>
+-        <class>com.infopulse.entity.GoodCustomer</class>
+-        <class>com.infopulse.entity.BadBank</class>
++        <class>com.infopulse.entity.Pet</class>
++        <!--<class>com.infopulse.entity.Order</class>-->
++        <!--<class>com.infopulse.entity.Phone</class>-->
++        <!--<class>com.infopulse.entity.Bank</class>-->
++        <!--<class>com.infopulse.entity.GoodCustomer</class>-->
++        <!--<class>com.infopulse.entity.BadBank</class>-->
++        <!--<class>com.infopulse.entity.Address</class>-->
+ 
+-         <properties>
++        <properties>
+             <property name="hibernate.connection.driver_class" value = "org.postgresql.Driver"/>
+             <property name="hibernate.connection.username" value="postgres"/>
+-            <property name="hibernate.connection.password" value = "Tsunami9"/>
++            <property name="hibernate.connection.password" value = "anton1!"/>
+             <property name="hibernate.dialect" value = "org.hibernate.dialect.PostgreSQLDialect"/>
+             <property name="hibernate.show_sql" value = "true"/>
+             <property name="hibernate.hbm2ddl.auto" value = "create"/>
+-            <property name="hibernate.connection.url" value = "jdbc:postgresql://127.0.0.1/hibernate2"/>
++            <property name="hibernate.connection.url" value = "jdbc:postgresql://127.0.0.1:5433/hibernatehomework"/>
+             <property name="hibernate.connection.CharSet" value="utf8"/>
+             <property name="hibernate.connection.characterEncoding" value="utf8"/>
+             <property name="hibernate.connection.useUnicode" value="true"/>
+Index: src/main/java/com/infopulse/dao/HibernatePetDAO.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/infopulse/dao/HibernatePetDAO.java	(date 1538150056530)
++++ src/main/java/com/infopulse/dao/HibernatePetDAO.java	(date 1538150056530)
+@@ -0,0 +1,43 @@
++package com.infopulse.dao;
++
++import com.infopulse.entity.Pet;
++import org.hibernate.SessionFactory;
++
++import javax.persistence.EntityManager;
++import java.util.List;
++
++public class HibernatePetDAO implements PetDAO{
++    private final SessionFactory sessionFactory ;
++
++    public HibernatePetDAO(SessionFactory sessionFactory){
++        this.sessionFactory=sessionFactory;
++    }
++
++    @Override
++    public void insertPet(Pet pet) {
++        EntityManager entityManager = sessionFactory.createEntityManager();
++        entityManager.getTransaction().begin();
++        entityManager.persist(pet);
++        entityManager.getTransaction().commit();
++        entityManager.close();
++    }
++
++    @Override
++    public List<Pet> getAllPets() {
++        EntityManager entityManager=sessionFactory.createEntityManager();
++        entityManager.getTransaction().begin();
++        List<Pet>result = entityManager.createQuery("from Pet", Pet.class).getResultList();
++        entityManager.getTransaction().commit();
++        entityManager.close();
++        return result;
++    }
++
++    @Override
++    public void deleteAll() {
++        EntityManager entityManager=sessionFactory.createEntityManager();
++        entityManager.getTransaction().begin();
++        entityManager.createNativeQuery("DELETE from pets");
++        entityManager.getTransaction().commit();
++        entityManager.close();
++    }
++}
+Index: src/main/java/com/infopulse/entity/Order.java
+===================================================================
+--- src/main/java/com/infopulse/entity/Order.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
++++ src/main/java/com/infopulse/entity/Pet.java	(date 1538144631528)
+@@ -11,19 +11,21 @@
+ @Getter
+ @NoArgsConstructor
+ @Entity
+-@Table(name = "orders")
+-public class Order {
++@Table(name="pets")
++public class Pet {
+ 
+     @Id
+     @GeneratedValue(generator = "increment")
+     @GenericGenerator(name="increment", strategy = "increment")
+     private Long id;
+ 
+-
+-    @Column(name = "name", unique = false, nullable = false, length = 100)
++    @Column(name="name", unique=false,nullable = false, length = 100)
++    @Basic
+     private String name;
+ 
+-    @ManyToOne
+-    private Customer customer;
++    @Column(name = "animal",unique = false,nullable = false,length = 100)
++    @Basic
++    private String animal;
++
+ 
+ }
+Index: src/main/java/com/infopulse/factory/FactoryPet.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/infopulse/factory/FactoryPet.java	(date 1538144631618)
++++ src/main/java/com/infopulse/factory/FactoryPet.java	(date 1538144631618)
+@@ -0,0 +1,26 @@
++package com.infopulse.factory;
++
++import com.infopulse.dao.HibernatePetDAO;
++import com.infopulse.dao.PetDAO;
++import org.hibernate.SessionFactory;
++
++import javax.persistence.Persistence;
++
++public class FactoryPet{
++    final static FactoryPet INSTANCE = new FactoryPet();
++
++    final private SessionFactory sessionFactory;
++
++    public FactoryPet(){
++        sessionFactory = (SessionFactory) Persistence.createEntityManagerFactory( "org.hibernate.tutorial.jpa" );
++    }
++
++    public static FactoryPet getInstance(){
++        return INSTANCE;
++    }
++
++    public PetDAO getPetDAO(){
++        return new HibernatePetDAO(sessionFactory);
++    }
++}
++
+Index: src/main/java/com/infopulse/dao/PetDAO.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/infopulse/dao/PetDAO.java	(date 1538150056313)
++++ src/main/java/com/infopulse/dao/PetDAO.java	(date 1538150056313)
+@@ -0,0 +1,11 @@
++package com.infopulse.dao;
++
++import com.infopulse.entity.Pet;
++
++import java.util.List;
++
++public interface PetDAO {
++    void insertPet(Pet pet);
++    List<Pet> getAllPets();
++    void deleteAll();
++}
+Index: src/main/java/com/infopulse/main/Main.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/infopulse/main/Main.java	(revision e35c95c543044a8875916261b6748ba8aa4337ba)
++++ src/main/java/com/infopulse/main/Main.java	(date 1538147564961)
+@@ -1,17 +1,18 @@
+ package com.infopulse.main;
+ 
+-import com.infopulse.dao.CustomerDAO;
+-import com.infopulse.entity.Customer;
+-import com.infopulse.factory.Factory;
++import com.infopulse.dao.PetDAO;
++import com.infopulse.entity.Pet;
++import com.infopulse.factory.FactoryPet;
+ 
+ public class Main {
+ 
+     public static void main(String[] args){
+-        Factory factory = Factory.getInstance();
+-        CustomerDAO customerDAO = factory.getCustomerDAO();
+-        Customer customer =new Customer();
+-        customer.setName("aaaaa");
+-        customer.setSurename("bbbbbb");
+-        customerDAO.insertCustomer(customer);
++
++        FactoryPet factoryPet = FactoryPet.getInstance();
++        PetDAO petDAO = factoryPet.getPetDAO();
++        Pet pet =new Pet();
++        pet.setName("aaaaa");
++        pet.setAnimal("bbbbbb");
++        petDAO.insertPet(pet);
+     }
+ }
+Index: src/test/java/com/infopulse/dao/HibernatePetDAOTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/com/infopulse/dao/HibernatePetDAOTest.java	(date 1538146447284)
++++ src/test/java/com/infopulse/dao/HibernatePetDAOTest.java	(date 1538146447284)
+@@ -0,0 +1,38 @@
++package com.infopulse.dao;
++
++import com.infopulse.entity.Pet;
++import com.infopulse.factory.FactoryPet;
++import org.junit.Test;
++
++import java.util.List;
++
++import static junit.framework.TestCase.assertEquals;
++
++public class HibernatePetDAOTest {
++
++    private FactoryPet instance = FactoryPet.getInstance();
++
++
++    @Test
++    public void insertAndSelectEntityTest() {
++        Pet pet = new Pet();
++        pet.setName("Tobik");
++        pet.setAnimal("Dog");
++
++        PetDAO petDAO = instance.getPetDAO();
++
++        petDAO.insertPet(pet);
++
++
++
++        List<Pet> pets = petDAO.getAllPets();
++
++        Pet petResult = pets.stream()
++                .filter(c -> c.getName().equals("Tobik"))
++                .findFirst()
++                .get();
++
++        assertEquals("Tobik", petResult.getName());
++        assertEquals("Dog", petResult.getAnimal());
++    }
++}
+\ No newline at end of file
