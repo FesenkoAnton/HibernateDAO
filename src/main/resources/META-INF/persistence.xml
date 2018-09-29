@@ -6,7 +6,7 @@
     <persistence-unit name="org.hibernate.tutorial.jpa">
         <class>com.infopulse.entity.Pet</class>
         <class>com.infopulse.entity.Owner</class>
-        <!--<class>com.infopulse.entity.Phone</class>-->
+        <class>com.infopulse.entity.Food</class>
         <!--<class>com.infopulse.entity.Bank</class>-->
         <!--<class>com.infopulse.entity.GoodCustomer</class>-->
         <!--<class>com.infopulse.entity.BadBank</class>-->

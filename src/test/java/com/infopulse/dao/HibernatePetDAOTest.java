@@ -1,5 +1,6 @@
 package com.infopulse.dao;
 
+import com.infopulse.entity.Food;
 import com.infopulse.entity.Owner;
 import com.infopulse.entity.Pet;
 import com.infopulse.factory.FactoryPet;
@@ -27,6 +28,17 @@ public class HibernatePetDAOTest {
         owner.setOwner_name("Timur");
         owner.setPet(pet);
         pet.setOwner(owner);
+
+        Food food1 =new Food();
+        food1.setName("Mnyam mnyam");
+        food1.setPet(pet);
+
+        Food food2 =new Food();
+        food2.setName("jjjj");
+        food2.setPet(pet);
+
+        pet.addFood(food1);
+        pet.addFood(food2);
 
         petDAO.insertPet(pet);
 

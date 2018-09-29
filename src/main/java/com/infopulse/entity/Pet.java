@@ -7,6 +7,9 @@ import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static javax.persistence.DiscriminatorType.STRING;
 import static javax.persistence.InheritanceType.SINGLE_TABLE;
 
@@ -16,8 +19,8 @@ import static javax.persistence.InheritanceType.SINGLE_TABLE;
 @Entity
 @Table(name="pets")
 @Inheritance(strategy = SINGLE_TABLE)
-//@DiscriminatorColumn(name="Typecli", discriminatorType=STRING, length=20)
-//@DiscriminatorValue("PET")
+@DiscriminatorColumn(name="Typecli", discriminatorType=STRING, length=20)
+@DiscriminatorValue("PET")
 public class Pet {
 
     @Id
@@ -36,5 +39,10 @@ public class Pet {
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     Owner owner;
 
+    @OneToMany(mappedBy = "pet", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Food> foods = new ArrayList<>();
 
+    public void addFood(Food food){
+        foods.add(food);
+    }
 }
